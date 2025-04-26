@@ -55,5 +55,11 @@
         "key": "manga_dex",
         "version": "1.0.0",
         "description": "Account feature is not supported yet."
+    },
+    {
+        "name": "爱看漫",
+        "fileName": "ikmmh.js",
+        "key": "ikmmh",
+        "version": "1.0.0"
     }
 ]
