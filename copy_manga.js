@@ -10,53 +10,86 @@ class CopyManga extends ComicSource {
 
     url = "https://cdn.jsdelivr.net/gh/venera-app/venera-configs@main/copy_manga.js"
 
+    async updateReqIdBackground() {
+        const reqIdUrl = "https://marketing.aiacgn.com/api/v2/adopr/query3/?format=json&ident=200100001";
+
+        try {
+            const response = await Network.get(reqIdUrl, {
+                ...this.headers,
+                "Content-Type": "application/x-www-form-urlencoded;charset=utf-8",
+                "accept": "application/json",
+                "accept-encoding": "gzip",
+            });
+
+            if (response.status === 200) {
+                const data = JSON.parse(response.body);
+                const reqId = data.results.request_id;
+
+                this.saveData('_reqId_cache', reqId);
+                this.saveData('_reqId_timestamp', Date.now());
+            }
+        } catch (e) {
+
+        }
+    }
+
+    async updateReqIdSync() {
+        const cacheKey = '_reqId_cache';
+        const timeKey = '_reqId_timestamp';
+        const oldReqId = this.loadData(cacheKey);
+
+        const reqIdUrl = "https://marketing.aiacgn.com/api/v2/adopr/query3/?format=json&ident=200100001";
+
+        try {
+            const response = await Network.get(reqIdUrl, {
+                ...this.headers,
+                "Content-Type": "application/x-www-form-urlencoded;charset=utf-8",
+                "accept": "application/json",
+                "accept-encoding": "gzip",
+            });
+
+            if (response.status === 200) {
+                const data = JSON.parse(response.body);
+                const reqId = data.results.request_id;
+
+                this.saveData(cacheKey, reqId);
+                this.saveData(timeKey, Date.now());
+
+                return reqId;
+            }
+        } catch (e) {
+            return oldReqId || "";
+        }
+
+        return oldReqId || "";
+    }
+
     async getReqID() {
         if (this.copyRegion === "0") {
             return "";
         }
 
         const cacheKey = '_reqId_cache';
-        const timestampKey = '_reqId_timestamp';
+        const timeKey = '_reqId_timestamp';
 
         const cachedReqId = this.loadData(cacheKey);
-        const cachedTimestamp = this.loadData(timestampKey);
+        const cachedTime = this.loadData(timeKey) || 0;
+        const now = Date.now();
 
-        if (cachedTimestamp && cachedReqId) {
-            const now = Date.now();
-            const oneHour = 60 * 60 * 1000; // 1小时的毫秒数
+        const ONE_HOUR = 60 * 60 * 1000;
+        const TWO_MIN = 2 * 60 * 1000;
 
-            if (now - cachedTimestamp < oneHour) {
-                return cachedReqId;
+        if (cachedReqId && (now - cachedTime < ONE_HOUR)) {
+            if (now - cachedTime > TWO_MIN) {
+                setTimeout(
+                    () => this.updateReqIdBackground(),
+                    Math.floor(Math.random() * 3000)
+                );
             }
+            return cachedReqId;
         }
 
-        const reqIdUrl = "https://marketing.aiacgn.com/api/v2/adopr/query3/?format=json&ident=200100001";
-        let reqId = "";
-
-        try {
-            const response = await Network.get(reqIdUrl,
-                {
-                    ...this.headers,
-                    "Content-Type": "application/x-www-form-urlencoded;charset=utf-8",
-                    "accept": "application/json",
-                    "accept-encoding": "gzip",
-                }
-            );
-
-            if (response.status === 200) {
-                const data = JSON.parse(response.body);
-                reqId = data.results.request_id;
-
-                this.saveData(cacheKey, reqId);
-                this.saveData(timestampKey, Date.now());
-            }
-        } catch (e) {
-            if (cachedReqId) {
-                return cachedReqId;
-            }
-        }
-
-        return reqId;
+        return await this.updateReqIdSync();
     }
 
     get headers() {
