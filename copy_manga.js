@@ -887,6 +887,16 @@ class CopyManga extends ComicSource {
                 }
             }
         },
+        onImageLoad: (url, comicId, epId) => {
+            return {
+                headers: this.headers
+            };
+        },
+        onThumbnailLoad: (url) => {
+            return {
+                headers: this.headers
+            };
+        },
         loadComments: async (comicId, subId, page, replyTo) => {
             let url = `${this.apiUrl}/api/v3/comments?comic_id=${subId}&limit=20&offset=${(page - 1) * 20}`;
             if (replyTo) {
