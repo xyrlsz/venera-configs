@@ -46,7 +46,7 @@ class Baozi extends ComicSource {
         { value: "s1.baozicdn.com" },
         { value: "", text: "默认" },
       ],
-      default: "as-rsa1-usla.baozicdn.com",
+      default: "",
     },
     image_quality: {
       title: "图片质量",
